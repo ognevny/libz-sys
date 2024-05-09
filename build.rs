@@ -3,7 +3,6 @@ use std::fs;
 use std::path::PathBuf;
 
 fn main() {
-    println!("cargo:rerun-if-env-changed=LIBZ_SYS_STATIC");
     println!("cargo:rerun-if-changed=build.rs");
     let host = env::var("HOST").unwrap();
     let target = env::var("TARGET").unwrap();
@@ -20,10 +19,7 @@ fn main() {
     // also don't run pkg-config on FreeBSD/DragonFly. That'll end up printing
     // `-L /usr/lib` which wreaks havoc with linking to an OpenSSL in /usr/local/lib
     // (Ports, etc.)
-    let want_static =
-        cfg!(feature = "static") || env::var("LIBZ_SYS_STATIC").unwrap_or(String::new()) == "1";
-    if !want_static &&
-       !target.contains("msvc") && // pkg-config just never works here
+    if !target.contains("msvc") && // pkg-config just never works here
        !(host_and_target_contain("freebsd") ||
          host_and_target_contain("dragonfly"))
     {
@@ -77,8 +73,6 @@ fn main() {
     // cross compiling (via fat binary or in the target's Xcode SDK)
     let cross_compiling = target != host;
     if target.contains("msvc")
-        || target.contains("pc-windows-gnu")
-        || want_static
         || (cross_compiling && !target.contains("-apple-"))
     {
         return build_zlib(&mut cfg, &target);
